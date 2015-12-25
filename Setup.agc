@@ -7,13 +7,15 @@ rem prior to execution of the  AGC source code.
 rem No spaces allowed beyond this point:
 
 rem Window title
-title=My AGK Application
+title$="My AGK Application"
 
 rem Specify the initial device width
-width=1024
+global width=1024
 
 rem Specify the initial device height
-height=768
+global height=768
+
+global textSize = 64
 
 // Specify whether to use fullscreen mode
 fullscreen=0
