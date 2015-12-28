@@ -8,7 +8,7 @@ FILE_3=marine.agc;-1
 [files]
 FILE_NAME_0=0;main.agc;331;0
 FILE_NAME_1=0;Setup.agc;496;2
-FILE_NAME_2=1;Main_menu.agc;565;3
+FILE_NAME_2=1;Main_menu.agc;32;3
 FILE_NAME_3=0;marine.agc;8;1
 
 [project]
