@@ -5,7 +5,8 @@
 Weapon::Weapon(int Inputsprite, int Inputspread,
 	int InputreloadTime, int InputrateofFire, float LocX,
 	float LocY, float InputaimDir, int InputProjectileSpeed,
-	bool InputFriendly, int InputProjectileDamage, int InputProjectileSprite)
+	bool InputFriendly, int InputProjectileDamage, int InputProjectileSprite,
+	float InputOffsetX, float InputOffsetY, float InputProjectileHealth)
 {
 	sprite = Inputsprite;
 	spread = Inputspread;
@@ -19,6 +20,9 @@ Weapon::Weapon(int Inputsprite, int Inputspread,
 	friendly = InputFriendly;
 	projectileSprite = InputProjectileSprite;
 	weaponCycle = 0;
+	weaponOffsetX = InputOffsetX;
+	weaponOffsetY = InputOffsetY;
+	projectileHealth = InputProjectileHealth;
 }
 
 Weapon::Weapon()
@@ -56,9 +60,9 @@ Projectile Weapon::Fire(float random)
 	}
 	weaponCycle = rateofFire;
 
-	return Projectile(projectileSprite,friendly, locationX + (sinf(aimDir)*20),
-		locationY - (cosf(aimDir) * 36),
-		ProjectileDirection,projectileSpeed, projectileDamage);
+	return Projectile(projectileSprite,friendly, locationX + (sinf(aimDir)*weaponOffsetY) + (cosf(aimDir) * weaponOffsetX),
+		locationY - (cosf(aimDir) * weaponOffsetY) + (sinf(aimDir) * weaponOffsetX),
+		ProjectileDirection,projectileSpeed, projectileDamage, projectileHealth);
 }
 
 void Weapon::cycle(float time)
