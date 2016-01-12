@@ -12,11 +12,28 @@ void Marine::Wander(float time)
 	}
 }
 
-void Marine::Move(float time)
+void Marine::AimAtPlayer(float time, float PlayerX, float PlayerY)
+{
+	float deltaY = PlayerY - locationY;
+	float deltaX = PlayerX - locationX;
+
+	float angle = atan2f(deltaY, deltaX);
+
+	if (angle < aimDir - (pi / 2))
+	{
+		aimDir = aimDir - (2 * time);
+	}
+	else if (angle > aimDir - (pi / 2))
+	{
+		aimDir = aimDir + (2 * time);
+	}
+}
+
+void Marine::Move(float time, float PlayerX, float PlayerY)
 {
 	if (state == 0)
 	{
-		Wander(time);
+		AimAtPlayer(time, PlayerX, PlayerY);
 	}
 	locationX = locationX + sinf(aimDir)*time*10*speed;
 	locationY = locationY - cosf(aimDir)*time*10*speed;
@@ -32,8 +49,8 @@ void Marine::GetHit()
 
 }
 
-void Marine::Die()
+bool Marine::Die()
 {
-
+	return true;
 }
 

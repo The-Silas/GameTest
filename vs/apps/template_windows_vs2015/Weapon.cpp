@@ -6,7 +6,8 @@ Weapon::Weapon(int Inputsprite, int Inputspread,
 	int InputreloadTime, int InputrateofFire, float LocX,
 	float LocY, float InputaimDir, int InputProjectileSpeed,
 	bool InputFriendly, int InputProjectileDamage, int InputProjectileSprite,
-	float InputOffsetX, float InputOffsetY, float InputProjectileHealth)
+	float InputOffsetX, float InputOffsetY, float InputProjectileHealth,
+	int sound, bool InputFullAuto)
 {
 	sprite = Inputsprite;
 	spread = Inputspread;
@@ -23,6 +24,8 @@ Weapon::Weapon(int Inputsprite, int Inputspread,
 	weaponOffsetX = InputOffsetX;
 	weaponOffsetY = InputOffsetY;
 	projectileHealth = InputProjectileHealth;
+	soundID = sound;
+	fullAuto = InputFullAuto;
 }
 
 Weapon::Weapon()
@@ -69,7 +72,7 @@ void Weapon::cycle(float time)
 {
 	if (weaponCycle > 0)
 	{
-		weaponCycle = weaponCycle - (time*100);
+		weaponCycle = weaponCycle - (time*20);
 	}
 
 }

@@ -12,10 +12,10 @@ public:
 	float aimDir, locationX, locationY;
 	Enemy(int, float, float, int, int);
 	~Enemy();
-	virtual void Move(float); //moves the enemy
+	virtual void Move(float, float, float); //moves the enemy
 	virtual void Attack(); //the enemy attacks
 	virtual void GetHit(); //the enemy gets hit
-	virtual void Die(); //the enemy dies
+	virtual bool Die(); //the enemy dies
 };
 
 #endif

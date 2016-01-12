@@ -7,10 +7,11 @@
 class Weapon
 {
 public:
-	int sprite, spread, reloadTime, rateofFire;
+	int sprite, spread, reloadTime, rateofFire, soundID;
 	float locationX, locationY, aimDir;
+	bool fullAuto;
 	Weapon(int,int,int,int, float, float, float, int, bool,
-		int, int, float, float, float);
+		int, int, float, float, float, int, bool);
 	Weapon();
 	~Weapon();
 	bool CanFire();

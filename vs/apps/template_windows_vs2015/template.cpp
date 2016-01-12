@@ -30,17 +30,18 @@ void app::Begin(void)
 	agk::SetClearColor( 151,170,204 ); // light blue
 	agk::SetSyncRate(60,0);
 	agk::SetScissor(0,0,0,0);
+	agk::SetGlobal3DDepth(10000);
 
 	//load background
 	int street = agk::LoadImage("street.png");
-	agk::SetSpritePosition(agk::CreateSprite(street),
-		0, 0);
+	street = agk::CreateSprite(street);
+	agk::SetSpritePosition(street, 0, 0);
+	agk::SetSpriteDepth(street, 10000);
 
 	//Load enemies
 	int Eimage = agk::LoadImage("soldier.png");
 	for (int x = 0; x < 10; x++)
 	{
-		
 		marines.push_back(Marine(agk::CreateSprite(Eimage), x * 60, 200, 100,10));
 		
 		agk::SetSpritePosition(marines[x].sprite,
@@ -49,6 +50,7 @@ void app::Begin(void)
 		agk::SetSpriteOffset(marines[x].sprite, 20, 36);
 		agk::SetSpriteShapeCircle(marines[x].sprite, 0, 0, 14);
 		agk::SetSpriteGroup(marines[x].sprite, enemiesGroup);
+		agk::SetSpriteDepth(marines[x].sprite, enemiesGroup);
 	}
 
 	//load player
@@ -56,11 +58,12 @@ void app::Begin(void)
 	int pistolsprite = agk::CreateSprite( agk::LoadImage("pistol_0.png"));
 	agk::AddSpriteAnimationFrame(pistolsprite, agk::LoadImage("pistol_1.png"));
 	agk::AddSpriteAnimationFrame(pistolsprite, agk::LoadImage("pistol_0.png"));
+	agk::AddSpriteAnimationFrame(pistolsprite, agk::LoadImage("pistol_g.png"));
 	agk::SetSpriteOffset(pistolsprite, 20, 36);
-	
 
-	Weapon w = Weapon(pistolsprite,0,10,5,500,400,0,2000,true,25,
-		agk::LoadImage("pistol_bullet.png"),7,36,500);
+	int gunshotSound = agk::LoadSound("gunshot-1.wav");
+	Weapon w = Weapon(pistolsprite,2,10,5,500,400,0,2000,true,25,
+		agk::LoadImage("pistol_bullet.png"),7,36,500,gunshotSound, true);
 	player = Player(1, 500, 400, agk::CreateSprite(Pimage),w);
 	agk::SetSpriteOffset(player.image, 20, 36);
 	agk::SetSpriteGroup(player.image, friendliesGroup);
@@ -68,6 +71,9 @@ void app::Begin(void)
 		player.locationX, player.locationY);
 	agk::SetSpriteShapeCircle(player.image, 20, 36, 14);
 	agk::SetSpriteAngleRad(player.image, player.aimDir);
+	agk::SetSpriteDepth(player.image, friendliesGroup);
+
+	//Load muzzleflash
 
 	lastFrame = agk::Timer();
 	agk::SetVSync(1);
@@ -80,22 +86,48 @@ void app::Loop (void)
 	difference = thisFrame - lastFrame;
 	lastFrame = thisFrame;
 
-	//Check to see click
-	if (agk::GetPointerPressed() == 1)
+	//Check to see pointer held
+	if (agk::GetPointerState() == 1)
 	{
-		if (player.playerWeapon.CanFire())
+		if (player.playerWeapon.CanFire() && player.playerWeapon.fullAuto)
 		{
 			Projectile p = player.playerWeapon.Fire(std::rand()%100);
 			p.sprite = agk::CreateSprite(p.sprite);
 			agk::SetSpriteShape(p.sprite,1);
+			agk::SetSpriteDepth(p.sprite, bulletsGroup);
 			agk::SetSpritePhysicsIsBullet(p.sprite, 1);
 			agk::SetSpritePhysicsIsBullet(p.sprite, 1);
 			agk::SetSpriteAngleRad(p.sprite, p.aimDir);
 			agk::SetSpriteGroup(p.sprite, bulletsGroup);
 			bullets.push_back(p);
 			agk::PlaySprite(player.playerWeapon.sprite, 10, 0,1,2);
+			agk::PlaySound(player.playerWeapon.soundID);
+			agk::CreatePointLight(1, p.locationXCurrent, p.locationYCurrent,
+				50, 1000, 0, 255, 0);
 		}
 	}
+
+	//Check to see pointer click
+	if (agk::GetPointerPressed() == 1)
+	{
+		if (player.playerWeapon.CanFire() && !player.playerWeapon.fullAuto)
+		{
+			Projectile p = player.playerWeapon.Fire(std::rand() % 100);
+			p.sprite = agk::CreateSprite(p.sprite);
+			agk::SetSpriteShape(p.sprite, 1);
+			agk::SetSpriteDepth(p.sprite, bulletsGroup);
+			agk::SetSpritePhysicsIsBullet(p.sprite, 1);
+			agk::SetSpritePhysicsIsBullet(p.sprite, 1);
+			agk::SetSpriteAngleRad(p.sprite, p.aimDir);
+			agk::SetSpriteGroup(p.sprite, bulletsGroup);
+			bullets.push_back(p);
+			agk::PlaySprite(player.playerWeapon.sprite, 10, 0, 1, 2);
+			agk::PlaySound(player.playerWeapon.soundID);
+			agk::CreatePointLight(1, p.locationXCurrent, p.locationYCurrent,
+				50, 1000, 0, 255, 0);
+		}
+	}
+
 
 	//Update bullets
 	for (int w = 0; w < bullets.size(); w++)
@@ -131,11 +163,22 @@ void app::Loop (void)
 	//Update enemies
 	for (int w = 0; w < marines.size(); w++)
 	{
-		//marines[w].Move(difference);
-		//agk::SetSpritePosition(marines[w].sprite,
-		//	marines[w].locationX, marines[w].locationY);
-		//agk::SetSpriteAngleRad(marines[w].sprite, marines[w].aimDir);
-		agk::SetSpriteColor(marines[w].sprite, 255, 255, 255, 255);
+		if (marines[w].health < 0)
+		{
+			if (marines[w].Die())
+			{
+				agk::DeleteSprite(marines[w].sprite);
+				marines.erase(marines.begin() + w);
+			}
+		}
+		else
+		{
+			marines[w].Move(difference, player.locationX, player.locationY);
+			agk::SetSpritePosition(marines[w].sprite,
+				marines[w].locationX, marines[w].locationY);
+			agk::SetSpriteAngleRad(marines[w].sprite, marines[w].aimDir);
+			agk::SetSpriteColor(marines[w].sprite, 255, 255, 255, 255);
+		}
 	}
 
 	//Check collisions
@@ -144,7 +187,7 @@ void app::Loop (void)
 		if (bullets[w].friendly)
 		{
 			for (int v = 0; v < marines.size(); v++)
-			{.
+			{
 				
 				if (agk::SpriteRayCastSingle(marines[v].sprite, 
 					bullets[w].locationXLast, bullets[w].locationYLast,

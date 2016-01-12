@@ -17,7 +17,7 @@ Enemy::~Enemy()
 }
 
 
-void Enemy::Move(float time)
+void Enemy::Move(float time, float PlayerX, float PlayerY)
 {
 }
 
@@ -29,8 +29,9 @@ void Enemy::GetHit()
 {
 }
 
-void Enemy::Die()
+bool Enemy::Die()
 {
+	return true;
 }
 
 
