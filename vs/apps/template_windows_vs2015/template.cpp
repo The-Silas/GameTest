@@ -38,11 +38,39 @@ void app::Begin(void)
 	agk::SetSpritePosition(street, 0, 0);
 	agk::SetSpriteDepth(street, 10000);
 
+	//load player
+	int Pimage = agk::LoadImage("player.png");
+	int pistolsprite = agk::CreateSprite(agk::LoadImage("pistol_0.png"));
+	agk::AddSpriteAnimationFrame(pistolsprite, agk::LoadImage("pistol_1.png"));
+	agk::AddSpriteAnimationFrame(pistolsprite, agk::LoadImage("pistol_0.png"));
+	agk::AddSpriteAnimationFrame(pistolsprite, agk::LoadImage("pistol_g.png"));
+	agk::SetSpriteOffset(pistolsprite, 20, 36);
+
+	int gunshotSound = agk::LoadSound("gunshot-1.wav");
+	Weapon w = Weapon(pistolsprite, 2, 10, 5, 500, 400, 0, 2000, true, 25,
+		agk::LoadImage("pistol_bullet.png"), 7, 36, 500, gunshotSound, true);
+	player = Player(1, 500, 400, agk::CreateSprite(Pimage), w);
+	agk::SetSpriteOffset(player.image, 20, 36);
+	agk::SetSpriteGroup(player.image, friendliesGroup);
+	agk::SetSpritePositionByOffset(player.image,
+		player.locationX, player.locationY);
+	agk::SetSpriteShapeCircle(player.image, 20, 36, 14);
+	agk::SetSpriteAngleRad(player.image, player.aimDir);
+	agk::SetSpriteDepth(player.image, friendliesGroup);
+
 	//Load enemies
 	int Eimage = agk::LoadImage("soldier.png");
 	for (int x = 0; x < 10; x++)
 	{
-		marines.push_back(Marine(agk::CreateSprite(Eimage), x * 60, 200, 100,10));
+		int mpistolsprite = agk::CreateSprite(agk::LoadImage("pistol_0.png"));
+		agk::AddSpriteAnimationFrame(mpistolsprite, agk::LoadImage("pistol_1.png"));
+		agk::AddSpriteAnimationFrame(mpistolsprite, agk::LoadImage("pistol_0.png"));
+		agk::AddSpriteAnimationFrame(mpistolsprite, agk::LoadImage("pistol_g.png"));
+		agk::SetSpriteOffset(mpistolsprite, 20, 36);
+
+		marines.push_back(Marine(agk::CreateSprite(Eimage), x * 60, 200, 100,10,
+			Weapon(mpistolsprite, 2, 10, 5, 500, 400, 0, 2000, false, 25,
+				agk::LoadImage("pistol_bullet.png"), 7, 36, 500, gunshotSound, true)));
 		
 		agk::SetSpritePosition(marines[x].sprite,
 			marines[x].locationX, marines[x].locationY);
@@ -53,25 +81,6 @@ void app::Begin(void)
 		agk::SetSpriteDepth(marines[x].sprite, enemiesGroup);
 	}
 
-	//load player
-	int Pimage = agk::LoadImage("player.png");
-	int pistolsprite = agk::CreateSprite( agk::LoadImage("pistol_0.png"));
-	agk::AddSpriteAnimationFrame(pistolsprite, agk::LoadImage("pistol_1.png"));
-	agk::AddSpriteAnimationFrame(pistolsprite, agk::LoadImage("pistol_0.png"));
-	agk::AddSpriteAnimationFrame(pistolsprite, agk::LoadImage("pistol_g.png"));
-	agk::SetSpriteOffset(pistolsprite, 20, 36);
-
-	int gunshotSound = agk::LoadSound("gunshot-1.wav");
-	Weapon w = Weapon(pistolsprite,2,10,5,500,400,0,2000,true,25,
-		agk::LoadImage("pistol_bullet.png"),7,36,500,gunshotSound, true);
-	player = Player(1, 500, 400, agk::CreateSprite(Pimage),w);
-	agk::SetSpriteOffset(player.image, 20, 36);
-	agk::SetSpriteGroup(player.image, friendliesGroup);
-	agk::SetSpritePositionByOffset(player.image,
-		player.locationX, player.locationY);
-	agk::SetSpriteShapeCircle(player.image, 20, 36, 14);
-	agk::SetSpriteAngleRad(player.image, player.aimDir);
-	agk::SetSpriteDepth(player.image, friendliesGroup);
 
 	//Load muzzleflash
 
@@ -123,8 +132,6 @@ void app::Loop (void)
 			bullets.push_back(p);
 			agk::PlaySprite(player.playerWeapon.sprite, 10, 0, 1, 2);
 			agk::PlaySound(player.playerWeapon.soundID);
-			agk::CreatePointLight(1, p.locationXCurrent, p.locationYCurrent,
-				50, 1000, 0, 255, 0);
 		}
 	}
 
@@ -163,7 +170,7 @@ void app::Loop (void)
 	//Update enemies
 	for (int w = 0; w < marines.size(); w++)
 	{
-		if (marines[w].health < 0)
+		if (marines[w].health <= 0)
 		{
 			if (marines[w].Die())
 			{
@@ -178,6 +185,30 @@ void app::Loop (void)
 				marines[w].locationX, marines[w].locationY);
 			agk::SetSpriteAngleRad(marines[w].sprite, marines[w].aimDir);
 			agk::SetSpriteColor(marines[w].sprite, 255, 255, 255, 255);
+			marines[w].weapon.cycle(difference);
+			if (marines[w].CanHitPlayer() && marines[w].weapon.CanFire())
+			{
+				Projectile p = marines[w].weapon.Fire(std::rand() % 100);
+				p.sprite = agk::CreateSprite(p.sprite);
+				agk::SetSpriteShape(p.sprite, 1);
+				agk::SetSpriteDepth(p.sprite, bulletsGroup);
+				agk::SetSpritePhysicsIsBullet(p.sprite, 1);
+				agk::SetSpritePhysicsIsBullet(p.sprite, 1);
+				agk::SetSpriteAngleRad(p.sprite, p.aimDir);
+				agk::SetSpriteGroup(p.sprite, bulletsGroup);
+				bullets.push_back(p);
+				agk::PlaySprite(player.playerWeapon.sprite, 10, 0, 1, 2);
+				agk::PlaySound(player.playerWeapon.soundID);
+			}
+
+			if (marines[w].health < 100)
+			{
+				int color = agk::MakeColor(0, 255, 0);
+				agk::DrawBox(marines[w].locationX, marines[w].locationY,
+					marines[w].locationX + (marines[w].health/2), marines[w].locationY + 3,
+					color, color, color, color, 1);
+
+			}
 		}
 	}
 
