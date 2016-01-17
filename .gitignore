@@ -205,4 +205,4 @@ FakesAssemblies/
 /vs/*
 !/vs/apps
 /vs/apps/*
-!/vs/apps/template_windows_vs2015
+!/vs/apps/template_windows_vs2013
